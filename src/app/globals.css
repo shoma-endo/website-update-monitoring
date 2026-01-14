@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+:root {
+  --background: #F5F7FA;
+  --foreground: #1F2329;
+  --brand-blue: #3370FF;
+  --brand-blue-bg: #E8F0FF;
+  --brand-blue-hover: #1F52DB;
+  --card-bg: #FFFFFF;
+  --card-hover-bg: #F8FAFC;
+  --border-color: #DEE0E3;
+  --text-primary: #1F2329;
+  --text-secondary: #646A73;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #17191D;
+    --foreground: #EFF0F1;
+    --brand-blue: #4A8CFF;
+    --brand-blue-bg: rgba(74, 140, 255, 0.1);
+    --card-bg: #22262C;
+    --card-hover-bg: #2B3037;
+    --border-color: #383D45;
+    --text-primary: #EFF0F1;
+    --text-secondary: #A6ABB2;
   }
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--background);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer utilities {
+  .animation-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

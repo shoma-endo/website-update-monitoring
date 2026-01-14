@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron?secret=antigravity-watch-mvp-secret",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
