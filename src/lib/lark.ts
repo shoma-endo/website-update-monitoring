@@ -1,4 +1,10 @@
 import * as Lark from '@larksuiteoapi/node-sdk';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// .env および .env.local を読み込む
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const appId = process.env.LARK_APP_ID || '';
 const appSecret = process.env.LARK_APP_SECRET || '';

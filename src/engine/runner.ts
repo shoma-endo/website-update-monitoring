@@ -38,7 +38,7 @@ async function checkMonitor(record: MonitorRecord) {
         ErrorMessage: ''
       });
     } else {
-      // Update only timestamp and clear error
+      // Update only timestamp and status
       await larkBase.updateMonitor(record_id, {
         LastChecked: Date.now(),
         Status: 'OK',

@@ -2,8 +2,9 @@ import * as Lark from '@larksuiteoapi/node-sdk';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// .env を読み込む（プロジェクトルートにある想定）
+// .env および .env.local を読み込む
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 const appId = process.env.LARK_APP_ID || '';
 const appSecret = process.env.LARK_APP_SECRET || '';
@@ -53,6 +54,8 @@ const REQUIRED_FIELDS = [
   { field_name: 'Selector', type: 1 },      // Text
   { field_name: 'LastHash', type: 1 },      // Text
   { field_name: 'LastChecked', type: 5 },   // DateTime
+  { field_name: 'Status', type: 1 },        // Text
+  { field_name: 'ErrorMessage', type: 1 },  // Text
 ];
 
 async function main() {
