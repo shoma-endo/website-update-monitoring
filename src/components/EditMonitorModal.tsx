@@ -88,6 +88,9 @@ export default function EditMonitorModal({ monitor, isOpen, onClose, onSuccess }
               value={formData.url}
               onChange={e => setFormData({...formData, url: e.target.value})}
             />
+            <p className="text-xs text-[var(--text-secondary)] mt-1 ml-1">
+              ※ 一般公開されている（ログイン不要な）ページのみ監視可能です。
+            </p>
           </div>
 
           <div className="space-y-2">

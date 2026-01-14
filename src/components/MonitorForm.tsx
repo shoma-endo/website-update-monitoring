@@ -101,6 +101,9 @@ export default function MonitorForm({ onSuccess }: MonitorFormProps) {
               onChange={e => setFormData({...formData, url: e.target.value})}
               className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--background)] text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 focus:ring-2 focus:ring-[var(--brand-blue)]/20 focus:border-[var(--brand-blue)] focus:bg-[var(--card-bg)] outline-none transition-all"
             />
+            <p className="text-xs text-[var(--text-secondary)] mt-1 ml-1">
+              ※ 一般公開されている（ログイン不要な）ページのみ監視可能です。
+            </p>
           </div>
 
           <div className="space-y-2">
