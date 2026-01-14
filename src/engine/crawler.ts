@@ -2,7 +2,20 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { SCRAPING_TIMEOUT, DEFAULT_USER_AGENT } from '../lib/constants';
 
+export function validateSelector(selector: string): void {
+  try {
+    // Cheerio load with empty HTML is lightweight and catches syntax errors
+    cheerio.load('')(selector);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid CSS selector "${selector}": ${errorMessage}`);
+  }
+}
+
 export async function fetchContent(url: string, selector: string): Promise<string> {
+  // Validate selector before making the network request
+  validateSelector(selector);
+
   try {
     const { data } = await axios.get(url, {
       timeout: SCRAPING_TIMEOUT,
