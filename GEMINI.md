@@ -9,9 +9,10 @@ This project is a website update monitoring tool built with Next.js. It allows u
 - **Styling**: Tailwind CSS / Vanilla CSS
 - **Database/Storage**: Lark Base (BitTable)
 - **Notification**: Lark Bot
-- **Crawling**: Axios + Cheerio
+- **Crawling**: Axios + Cheerio (static pages), Puppeteer (JavaScript-rendered pages)
 - **Package Manager**: pnpm
 - **Tools**: tsx (for scripts), dotenv (for environment variable loading in scripts)
+
 
 ## Architecture
 The application is structured as a Next.js application using the App Router.
@@ -23,7 +24,7 @@ The application is structured as a Next.js application using the App Router.
   - **`api/debug/`**: Endpoints for debugging information.
   - **`api/test-extract/`**: Endpoints for testing content extraction.
 - **`src/engine/`**: Core logic for monitoring.
-  - **`crawler.ts`**: Fetches URL content and extracts text using Cheerio.
+  - **`crawler.ts`**: Fetches URL content and extracts text. Automatically uses Cheerio for static pages or Puppeteer for JavaScript-rendered pages (e.g., platform.claude.com).
   - **`runner.ts`**: Orchestrates the check process: fetches monitors from Lark, crawls, compares hashes, and triggers notifications/updates.
 - **`src/lib/`**: Shared libraries.
   - **`lark.ts`**: Client for Lark Open Platform API (Bitable for storage, IM for notifications).

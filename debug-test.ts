@@ -12,8 +12,9 @@ async function test(label: string, url: string, selector: string) {
     console.log(`Content (first 200 chars): "${content.substring(0, 200)}..."`);
     console.log(`Hash: ${hash}`);
     return { content, hash };
-  } catch (e: any) {
-    console.error(`Error: ${e.message}`);
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    console.error(`Error: ${errorMessage}`);
   }
 }
 

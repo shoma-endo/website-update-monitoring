@@ -6,7 +6,10 @@
 
 - **特定箇所の監視**: URLとCSSセレクタを指定することで、ページ全体の更新ではなく、特定のコンテンツ（例: ニュースリスト、価格など）の変更のみを検知します。
 - **並列高速チェック**: 複数の監視対象を同時にチェックするため、対象数が増えても短時間で処理が完了します。
-- **堅牢なスクレイピング**: タイムアウト設定とUser-Agentの偽装により、接続エラーやブロックを最小限に抑えます。
+- **堅牢なスクレイピング**: 
+    - 静的ページは Axios + Cheerio で高速処理
+    - JavaScript レンダリングが必要なページ（例: Claude Developer Platform）は Puppeteer で自動対応
+    - タイムアウト設定とUser-Agentの偽装により、接続エラーやブロックを最小限に抑えます。
 - **Lark 連携**:
     - **設定管理**: 監視対象のリストは Lark Base (BitTable) で管理。UIからも直接編集可能。
     - **通知**: 更新検知時にリッチな Lark カード形式で通知。
@@ -26,7 +29,9 @@ graph TD
 
 ### 主要コンポーネント
 - **`src/engine/runner.ts`**: 全体の中核ロジック。`Promise.allSettled` による並列処理を制御。
-- **`src/engine/crawler.ts`**: Axios + Cheerio を使用。10秒のタイムアウトとブラウザヘッダーを実装。
+- **`src/engine/crawler.ts`**: URL パターンに基づいて自動的に最適な取得方法を選択:
+    - 静的ページ: Axios + Cheerio（高速）
+    - JavaScript レンダリングページ: Puppeteer（platform.claude.com など）
 - **`src/lib/notification.ts`**: Lark 通知カードの構築と送信を担当。
 - **`src/lib/lark.ts`**: Lark SDK を使用したデータの読み書き。
 
@@ -34,7 +39,7 @@ graph TD
 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
-- **Crawling**: Axios, Cheerio
+- **Crawling**: Axios + Cheerio (静的ページ), Puppeteer (JavaScript レンダリングページ)
 - **Database**: Lark Base (BitTable)
 - **Notification**: Lark Bot (Interactive Cards)
 

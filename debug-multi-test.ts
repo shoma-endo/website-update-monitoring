@@ -3,15 +3,16 @@ import crypto from 'crypto';
 
 async function test(label: string, url: string, selector: string, iterations: number = 3) {
   console.log(`--- Multi-testing ${label} ---`);
-  const results = [];
+  const results: { hash: string; length: number; content: string }[] = [];
   for (let i = 0; i < iterations; i++) {
     try {
       const content = await fetchContent(url, selector);
       const hash = crypto.createHash('sha256').update(content).digest('hex');
       results.push({ hash, length: content.length, content: content.substring(0, 50) });
       console.log(`Run ${i+1}: Hash=${hash}, Length=${content.length}`);
-    } catch (e: any) {
-      console.error(`Run ${i+1} Error: ${e.message}`);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      console.error(`Run ${i+1} Error: ${errorMessage}`);
     }
     if (i < iterations - 1) await new Promise(r => setTimeout(r, 1000));
   }
