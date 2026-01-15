@@ -53,7 +53,7 @@ const REQUIRED_FIELDS = [
   { field_name: 'URL', type: 1 },           // Text
   { field_name: 'Selector', type: 1 },      // Text
   { field_name: 'LastHash', type: 1 },      // Text
-  { field_name: 'LastChecked', type: 5 },   // DateTime
+  { field_name: 'LastChecked', type: 5 },   // Date
   { field_name: 'Status', type: 1 },        // Text
   { field_name: 'ErrorMessage', type: 1 },  // Text
 ];
