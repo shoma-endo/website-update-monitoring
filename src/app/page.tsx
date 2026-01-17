@@ -84,14 +84,14 @@ export default function Home() {
 
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* 左カラム: 登録フォーム */}
-          <div className="lg:col-span-12 xl:col-span-4">
+          <div className="lg:col-span-12 xl:col-span-5">
             <div className="bg-[var(--card-bg)] p-2 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[var(--border-color)]">
               <MonitorForm onSuccess={fetchMonitors} />
             </div>
           </div>
 
           {/* 右カラム: 監視リスト */}
-          <div className="lg:col-span-12 xl:col-span-8">
+          <div className="lg:col-span-12 xl:col-span-7">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 text-center sm:text-left">
               <div className="flex-1">
                 <div className="flex items-center gap-3">
