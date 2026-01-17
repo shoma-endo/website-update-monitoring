@@ -24,8 +24,10 @@ async function checkMonitor(record: MonitorRecord) {
     const content = await fetchContent(url as string, selector as string);
     const currentHash = crypto.createHash('sha256').update(content).digest('hex');
 
+    const timestamp = Date.now();
+
     if (!prevHash || prevHash !== currentHash) {
-      console.log(`Change detected for ${label || url}`);
+      console.log(`Change detected for ${label || url}. Updating Lark...`);
       
       // 通知処理を分離
       await sendChangeNotification(url as string, label || '無題');
@@ -33,18 +35,19 @@ async function checkMonitor(record: MonitorRecord) {
       // Update Lark with Success
       await larkBase.updateMonitor(record_id, {
         LastHash: currentHash,
-        LastChecked: Date.now(),
+        LastChecked: timestamp,
         Status: 'OK',
         ErrorMessage: ''
       });
     } else {
       // Update only timestamp and status
       await larkBase.updateMonitor(record_id, {
-        LastChecked: Date.now(),
+        LastChecked: timestamp,
         Status: 'OK',
         ErrorMessage: ''
       });
     }
+    // console.log(`Update completed for ${record_id}`);
     return { success: true, url, label };
   } catch (error: any) {
     console.error(`Failed to check ${url}:`, error);
