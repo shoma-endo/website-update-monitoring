@@ -10,16 +10,27 @@ jobs:
   cron:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Monitoring API
-        run: |
-          if [ -z "${{ secrets.VERCEL_APP_URL }}" ]; then
-            echo "Error: VERCEL_APP_URL secret is not set."
-            exit 1
-          fi
-          
-          # Vercel の API エンドポイントを叩く
-          # -f: HTTPエラー時にエラーコードを返す
-          # -s: 進捗表示を非表示にする
-          curl -fs "${{ secrets.VERCEL_APP_URL }}/api/cron?secret=${{ secrets.CRON_SECRET }}" \
-            -o /dev/null \
-            -w "HTTP Status: %{http_code}\nTotal Time: %{time_total}s\n"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Monitoring Script
+        env:
+          LARK_APP_ID: ${{ secrets.LARK_APP_ID }}
+          LARK_APP_SECRET: ${{ secrets.LARK_APP_SECRET }}
+          LARK_BASE_URL: ${{ secrets.LARK_BASE_URL }}
+          LARK_NOTIFY_CHAT_ID: ${{ secrets.LARK_NOTIFY_CHAT_ID }}
+        run: npx tsx scripts/trigger-check.ts
