@@ -10,6 +10,7 @@ export const DEFAULT_USER_AGENT =
 // ブラウザレンダリングが必要なURL/ドメインのパターン
 export const BROWSER_RENDER_PATTERNS = [
   'platform.claude.com',
+  'status.claude.com',
   // 必要に応じて他のドメインを追加
 ];
 
