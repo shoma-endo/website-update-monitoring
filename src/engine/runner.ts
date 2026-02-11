@@ -11,12 +11,21 @@ interface MonitorRecord {
     Selector?: string;
     LastHash?: string;
     Label?: string;
+    Status?: string;
+    ErrorMessage?: string;
   };
 }
 
 async function checkMonitor(record: MonitorRecord) {
   const { record_id, fields } = record;
-  const { URL: url, Selector: selector, LastHash: prevHash, Label: label } = fields;
+  const {
+    URL: url,
+    Selector: selector,
+    LastHash: prevHash,
+    Label: label,
+    Status: prevStatus,
+    ErrorMessage: prevErrorMessage
+  } = fields;
 
   if (!url || !selector) return;
 
@@ -40,12 +49,14 @@ async function checkMonitor(record: MonitorRecord) {
         ErrorMessage: ''
       });
     } else {
-      // Update only timestamp and status
-      await larkBase.updateMonitor(record_id, {
-        LastChecked: timestamp,
-        Status: 'OK',
-        ErrorMessage: ''
-      });
+      // 変更なしの場合は不要な通知を避けるため更新しない。
+      // ただし前回がエラー状態だった場合は復旧を1回だけ反映する。
+      if (prevStatus !== 'OK' || !!prevErrorMessage) {
+        await larkBase.updateMonitor(record_id, {
+          Status: 'OK',
+          ErrorMessage: ''
+        });
+      }
     }
     // console.log(`Update completed for ${record_id}`);
     return { success: true, url, label };
