@@ -23,6 +23,7 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const { label, url, selector } = body;
+    const normalizedSelector = typeof selector === 'string' ? selector.trim() : selector;
 
     // バリデーション
     if (url && !url.startsWith('http')) {
@@ -32,7 +33,7 @@ export async function PATCH(
     await larkBase.updateMonitor(id, {
         Label: label,
         URL: url,
-        Selector: selector
+        Selector: normalizedSelector
     });
 
     return NextResponse.json({ success: true });

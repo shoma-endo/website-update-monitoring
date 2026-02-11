@@ -26,8 +26,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { label, url, selector } = body;
+    const normalizedSelector = typeof selector === 'string' ? selector.trim() : '';
 
-    if (!url || !selector) {
+    if (!url || !normalizedSelector) {
       return NextResponse.json({ error: 'URL と セレクタは必須です。' }, { status: 400 });
     }
 
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
     const record = await larkBase.createMonitor({
       Label: label,
       URL: url,
-      Selector: selector,
+      Selector: normalizedSelector,
     });
 
     return NextResponse.json({ success: true, record });

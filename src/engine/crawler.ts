@@ -3,13 +3,32 @@ import * as cheerio from 'cheerio';
 import puppeteer from 'puppeteer';
 import { SCRAPING_TIMEOUT, DEFAULT_USER_AGENT, BROWSER_RENDER_PATTERNS, BROWSER_RENDER_TIMEOUT } from '../lib/constants';
 
+function normalizeSelector(selector: string): string {
+  return selector.trim();
+}
+
+function getSelectorCandidates(url: string, selector: string): string[] {
+  const normalized = normalizeSelector(selector);
+
+  if (url.includes('status.claude.com') && normalized === '.page-status') {
+    return [
+      normalized,
+      '.component-container .component-status',
+      '.incident-title a',
+    ];
+  }
+
+  return [normalized];
+}
+
 export function validateSelector(selector: string): void {
+  const normalized = normalizeSelector(selector);
   try {
     // Cheerio load with empty HTML is lightweight and catches syntax errors
-    cheerio.load('')(selector);
+    cheerio.load('')(normalized);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid CSS selector "${selector}": ${errorMessage}`);
+    throw new Error(`Invalid CSS selector "${normalized}": ${errorMessage}`);
   }
 }
 
@@ -25,6 +44,7 @@ function needsBrowserRendering(url: string): boolean {
  */
 async function fetchContentWithBrowser(url: string, selector: string): Promise<string> {
   let browser;
+  const candidates = getSelectorCandidates(url, selector);
   try {
     browser = await puppeteer.launch({
       headless: true,
@@ -41,23 +61,26 @@ async function fetchContentWithBrowser(url: string, selector: string): Promise<s
     });
     
     // セレクタが表示されるまで待機（最大5秒）
-    try {
-      await page.waitForSelector(selector, { timeout: 5000 });
-    } catch {
-      // セレクタが見つからない場合でも続行（後でエラーハンドリング）
+    for (const candidate of candidates) {
+      try {
+        await page.waitForSelector(candidate, { timeout: 3000 });
+        break;
+      } catch {
+        // セレクタが見つからない場合でも続行（後でエラーハンドリング）
+      }
     }
-    
-    // コンテンツを抽出
-    const text = await page.evaluate((sel) => {
-      const element = document.querySelector(sel);
-      return element ? element.textContent?.trim() || '' : '';
-    }, selector);
-    
-    if (!text) {
-      throw new Error(`Selector "${selector}" not found or empty`);
+
+    for (const candidate of candidates) {
+      const text = await page.evaluate((sel) => {
+        const element = document.querySelector(sel);
+        return element ? element.textContent?.trim() || '' : '';
+      }, candidate);
+      if (text) {
+        return text;
+      }
     }
-    
-    return text;
+
+    throw new Error(`Selector "${normalizeSelector(selector)}" not found or empty`);
   } finally {
     if (browser) {
       await browser.close();
@@ -69,6 +92,7 @@ async function fetchContentWithBrowser(url: string, selector: string): Promise<s
  * 静的HTMLからコンテンツを取得（従来の方法）
  */
 async function fetchContentStatic(url: string, selector: string): Promise<string> {
+  const candidates = getSelectorCandidates(url, selector);
   const { data } = await axios.get(url, {
     timeout: SCRAPING_TIMEOUT,
     headers: { 
@@ -77,13 +101,18 @@ async function fetchContentStatic(url: string, selector: string): Promise<string
     }
   });
   const $ = cheerio.load(data);
-  const text = $(selector).text().trim();
-  
-  if (!text && $(selector).length === 0) {
-    throw new Error(`Selector "${selector}" not found`);
+
+  for (const candidate of candidates) {
+    const text = $(candidate).text().trim();
+    if (text) {
+      return text;
+    }
+    if ($(candidate).length > 0) {
+      return text;
+    }
   }
-  
-  return text;
+
+  throw new Error(`Selector "${normalizeSelector(selector)}" not found`);
 }
 
 export async function fetchContent(url: string, selector: string): Promise<string> {
