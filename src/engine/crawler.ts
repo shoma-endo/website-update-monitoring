@@ -39,19 +39,38 @@ function needsBrowserRendering(url: string): boolean {
   return BROWSER_RENDER_PATTERNS.some(pattern => url.includes(pattern));
 }
 
+async function launchBrowser() {
+  const isServerless = process.env.VERCEL === '1' || !!process.env.AWS_REGION;
+
+  if (isServerless) {
+    const [{ default: chromium }, puppeteerCore] = await Promise.all([
+      import('@sparticuz/chromium'),
+      import('puppeteer-core'),
+    ]);
+
+    return puppeteerCore.launch({
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+  }
+
+  return puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+}
+
 /**
  * Puppeteerを使用してJavaScriptレンダリング後のコンテンツを取得
  */
 async function fetchContentWithBrowser(url: string, selector: string): Promise<string> {
-  let browser;
+  let browser: any;
   const candidates = getSelectorCandidates(url, selector);
   try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    browser = await launchBrowser();
     
-    const page = await browser.newPage();
+    const page: any = await browser.newPage();
     await page.setUserAgent(DEFAULT_USER_AGENT);
     
     // ページを読み込み、ネットワークがアイドル状態になるまで待機
@@ -71,7 +90,7 @@ async function fetchContentWithBrowser(url: string, selector: string): Promise<s
     }
 
     for (const candidate of candidates) {
-      const text = await page.evaluate((sel) => {
+      const text = await page.evaluate((sel: string) => {
         const element = document.querySelector(sel);
         return element ? element.textContent?.trim() || '' : '';
       }, candidate);

@@ -11,6 +11,9 @@ importers:
       '@larksuiteoapi/node-sdk':
         specifier: ^1.56.1
         version: 1.56.1
+      '@sparticuz/chromium':
+        specifier: ^143.0.4
+        version: 143.0.4
       axios:
         specifier: ^1.13.2
         version: 1.13.2
@@ -29,6 +32,9 @@ importers:
       puppeteer:
         specifier: ^24.35.0
         version: 24.35.0(typescript@5.9.3)
+      puppeteer-core:
+        specifier: ^24.37.2
+        version: 24.37.2
       react:
         specifier: 19.2.3
         version: 19.2.3
@@ -623,8 +629,17 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  '@puppeteer/browsers@2.12.0':
+    resolution: {integrity: sha512-Xuq42yxcQJ54ti8ZHNzF5snFvtpgXzNToJ1bXUGQRaiO8t+B6UM8sTUJfvV+AJnqtkJU/7hdy6nbKyA12aHtRw==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
+
+  '@sparticuz/chromium@143.0.4':
+    resolution: {integrity: sha512-/6I7uQTRhRDD2/gGPQ1Gkf+Dqk0RYDACPJDZfSzz0OWk4JmUTonNHPXbrn6UIklOHlnDLf8xAAzkOZKB/cJpLA==}
+    engines: {node: '>=20.11.0'}
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -1109,6 +1124,11 @@ packages:
     peerDependencies:
       devtools-protocol: '*'
 
+  chromium-bidi@13.1.1:
+    resolution: {integrity: sha512-zB9MpoPd7VJwjowQqiW3FKOvQwffFMjQ8Iejp5ZW+sJaKLRhZX1sTxzl3Zt22TDB4zP0OOqs8lRoY7eAW5geyQ==}
+    peerDependencies:
+      devtools-protocol: '*'
+
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
 
@@ -1220,6 +1240,9 @@ packages:
 
   devtools-protocol@0.0.1534754:
     resolution: {integrity: sha512-26T91cV5dbOYnXdJi5qQHoTtUoNEqwkHcAyu/IKtjIAxiEqPMrDiRkDOPWVsGfNZGmlQVHQbZRSjD8sxagWVsQ==}
+
+  devtools-protocol@0.0.1566079:
+    resolution: {integrity: sha512-MJfAEA1UfVhSs7fbSQOG4czavUp1ajfg6prlAN0+cmfa2zNjaIbvq8VneP7do1WAQQIvgNJWSMeP6UyI90gIlQ==}
 
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
@@ -2184,6 +2207,10 @@ packages:
     resolution: {integrity: sha512-vt1zc2ME0kHBn7ZDOqLvgvrYD5bqNv5y2ZNXzYnCv8DEtZGw/zKhljlrGuImxptZ4rq+QI9dFGrUIYqG4/IQzA==}
     engines: {node: '>=18'}
 
+  puppeteer-core@24.37.2:
+    resolution: {integrity: sha512-nN8qwE3TGF2vA/+xemPxbesntTuqD9vCGOiZL2uh8HES3pPzLX20MyQjB42dH2rhQ3W3TljZ4ZaKZ0yX/abQuw==}
+    engines: {node: '>=18'}
+
   puppeteer@24.35.0:
     resolution: {integrity: sha512-sbjB5JnJ+3nwgSdRM/bqkFXqLxRz/vsz0GRIeTlCk+j+fGpqaF2dId9Qp25rXz9zfhqnN9s0krek1M/C2GDKtA==}
     engines: {node: '>=18'}
@@ -2501,6 +2528,9 @@ packages:
 
   webdriver-bidi-protocol@0.3.10:
     resolution: {integrity: sha512-5LAE43jAVLOhB/QqX4bwSiv0Hg1HBfMmOuwBSXHdvg4GMGu9Y0lIq7p4R/yySu6w74WmaR4GM4H9t2IwLW7hgw==}
+
+  webdriver-bidi-protocol@0.4.0:
+    resolution: {integrity: sha512-U9VIlNRrq94d1xxR9JrCEAx5Gv/2W7ERSv8oWRoNe/QYbfccS0V3h/H6qeNeCRJxXGMhhnkqvwNrvPAYeuP9VA==}
 
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
@@ -3063,7 +3093,32 @@ snapshots:
       - react-native-b4a
       - supports-color
 
+  '@puppeteer/browsers@2.12.0':
+    dependencies:
+      debug: 4.4.3
+      extract-zip: 2.0.1
+      progress: 2.0.3
+      proxy-agent: 6.5.0
+      semver: 7.7.3
+      tar-fs: 3.1.1
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - react-native-b4a
+      - supports-color
+
   '@rtsao/scc@1.1.0': {}
+
+  '@sparticuz/chromium@143.0.4':
+    dependencies:
+      follow-redirects: 1.15.11
+      tar-fs: 3.1.1
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - debug
+      - react-native-b4a
 
   '@swc/helpers@0.5.15':
     dependencies:
@@ -3568,6 +3623,12 @@ snapshots:
       mitt: 3.0.1
       zod: 3.25.76
 
+  chromium-bidi@13.1.1(devtools-protocol@0.0.1566079):
+    dependencies:
+      devtools-protocol: 0.0.1566079
+      mitt: 3.0.1
+      zod: 3.25.76
+
   client-only@0.0.1: {}
 
   cliui@8.0.1:
@@ -3674,6 +3735,8 @@ snapshots:
   detect-libc@2.1.2: {}
 
   devtools-protocol@0.0.1534754: {}
+
+  devtools-protocol@0.0.1566079: {}
 
   doctrine@2.1.0:
     dependencies:
@@ -4841,6 +4904,23 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  puppeteer-core@24.37.2:
+    dependencies:
+      '@puppeteer/browsers': 2.12.0
+      chromium-bidi: 13.1.1(devtools-protocol@0.0.1566079)
+      debug: 4.4.3
+      devtools-protocol: 0.0.1566079
+      typed-query-selector: 2.12.0
+      webdriver-bidi-protocol: 0.4.0
+      ws: 8.19.0
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - bufferutil
+      - react-native-b4a
+      - supports-color
+      - utf-8-validate
+
   puppeteer@24.35.0(typescript@5.9.3):
     dependencies:
       '@puppeteer/browsers': 2.11.1
@@ -5303,6 +5383,8 @@ snapshots:
       punycode: 2.3.1
 
   webdriver-bidi-protocol@0.3.10: {}
+
+  webdriver-bidi-protocol@0.4.0: {}
 
   whatwg-encoding@3.1.1:
     dependencies:
