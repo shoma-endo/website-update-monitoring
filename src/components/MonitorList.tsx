@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, useMemo } from 'react';
-import { Pencil, Trash2, ExternalLink, Bell, AlertTriangle } from 'lucide-react';
+import { Pencil, Trash2, ExternalLink, Bell, AlertTriangle, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import EditMonitorModal from './EditMonitorModal';
@@ -16,6 +14,8 @@ export interface Monitor {
     LastHash?: string;
     Status?: string;
     ErrorMessage?: string;
+    StartDate?: string;
+    EndDate?: string;
   };
 }
 
@@ -107,6 +107,7 @@ export default function MonitorList({ monitors, isLoading, onRefresh }: MonitorL
           .filter(m => m.fields.URL)
           .map((m) => {
             const isError = m.fields.Status === 'Error';
+            const hasDates = m.fields.StartDate || m.fields.EndDate;
             return (
               <div 
                 key={m.record_id} 
@@ -154,15 +155,26 @@ export default function MonitorList({ monitors, isLoading, onRefresh }: MonitorL
               </h3>
             </div>
             
-            <a 
-              href={m.fields.URL} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-sm font-medium text-[var(--brand-blue)] hover:text-[var(--brand-blue-hover)] break-all mb-6 flex items-center gap-1.5 group/link"
-            >
-              <ExternalLink size={14} className="shrink-0 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-              <span className="truncate underline-offset-4 group-hover:underline">{m.fields.URL}</span>
-            </a>
+            <div className="flex flex-col gap-2 mb-6">
+              <a 
+                href={m.fields.URL} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-sm font-medium text-[var(--brand-blue)] hover:text-[var(--brand-blue-hover)] break-all flex items-center gap-1.5 group/link"
+              >
+                <ExternalLink size={14} className="shrink-0 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+                <span className="truncate underline-offset-4 group-hover:underline">{m.fields.URL}</span>
+              </a>
+
+              {hasDates && (
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg w-fit">
+                  <Calendar size={12} className="shrink-0 text-slate-400" />
+                  <span>
+                    {m.fields.StartDate || '---'} ～ {m.fields.EndDate || '---'}
+                  </span>
+                </div>
+              )}
+            </div>
 
             {/* Error Message */}
             {isError && m.fields.ErrorMessage && (

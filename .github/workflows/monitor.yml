@@ -1,0 +1,41 @@
+name: Website Update Monitoring
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 1日1回（毎日午前0時 UTC / 午前9時 JST）に実行
+  workflow_dispatch: # 手動実行用
+
+concurrency:
+  group: monitoring-group
+  cancel-in-progress: false # すでに実行中の場合は、新しいジョブをキャンセルせず待機させる（または後で実行）
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Monitoring
+        env:
+          LARK_APP_ID: ${{ secrets.LARK_APP_ID }}
+          LARK_APP_SECRET: ${{ secrets.LARK_APP_SECRET }}
+          LARK_BASE_URL: ${{ secrets.LARK_BASE_URL }}
+          LARK_NOTIFY_CHAT_ID: ${{ secrets.LARK_NOTIFY_CHAT_ID }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: npx tsx scripts/run-all.ts

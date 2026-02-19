@@ -4,36 +4,43 @@
 
 ## 特徴
 
-- **特定箇所の監視**: URLとCSSセレクタを指定することで、ページ全体の更新ではなく、特定のコンテンツ（例: ニュースリスト、価格など）の変更のみを検知します。
-- **並列高速チェック**: 複数の監視対象を同時にチェックするため、対象数が増えても短時間で処理が完了します。
+- **URL自動追加 (URL Auto-Add)**: Amazonなどのイベントページを巡回し、新しいセールのURLを自動的に検出して監視リストに登録します。
+- **日付抽出 (Date Extraction)**: ページ内のテキストを解析し、セールの開始日・終了日を `yyyy-mm-dd` 形式で自動抽出します。
+- **ハイブリッドな監視体制**: 
+    - 管理UIは Next.js (Vercel) で提供
+    - 実際の重い監視処理は GitHub Actions で実行（タイムアウト制限なし）
 - **堅牢なスクレイピング**: 
     - 静的ページは Axios + Cheerio で高速処理
-    - JavaScript レンダリングが必要なページ（例: Claude Developer Platform）は Puppeteer で自動対応
-    - タイムアウト設定とUser-Agentの偽装により、接続エラーやブロックを最小限に抑えます。
+    - JavaScript レンダリングが必要なページは Puppeteer で自動対応
 - **Lark 連携**:
-    - **設定管理**: 監視対象のリストは Lark Base (BitTable) で管理。UIからも直接編集可能。
+    - **設定管理**: 監視対象や自動追加設定は Lark Base (BitTable) で管理。
     - **通知**: 更新検知時にリッチな Lark カード形式で通知。
 
 ## アーキテクチャ
 
 ```mermaid
 graph TD
-    Cron[Vercel Cron / API Call] --> Runner[Runner: src/engine/runner.ts]
-    Runner -->|1. Get Monitors| LarkBase[(Lark Base)]
-    Runner -->|2. Parallel Fetch| Crawler[Crawler: src/engine/crawler.ts]
-    Crawler -->|3. Scrape| TargetWeb[Target Websites]
-    Runner -->|4. Detect Change| Notifier[Notification: src/lib/notification.ts]
-    Notifier -->|5. Send Card| LarkBot[Lark Bot]
-    Runner -->|6. Update Hash| LarkBase
+    GA[GitHub Actions] --> RunnerCLI[CLI Runner: scripts/run-all.ts]
+    RunnerCLI -->|1. Run Auto-Add| Discovery[Engine: src/engine/discovery.ts]
+    Discovery -->|2. Register New URLs| LarkBase[(Lark Base)]
+    
+    RunnerCLI -->|3. Get Monitors| LarkBase
+    RunnerCLI -->|4. Parallel Fetch| Crawler[Crawler: src/engine/crawler.ts]
+    Crawler -->|5. Extract Dates| DateExtractor[Date Extractor: src/engine/date-extractor.ts]
+    Crawler -->|6. Scrape| TargetWeb[Target Websites]
+    
+    RunnerCLI -->|7. Detect Change| Notifier[Notification: src/lib/notification.ts]
+    Notifier -->|8. Send Card| LarkBot[Lark Bot]
+    RunnerCLI -->|9. Update Hash/Dates| LarkBase
+    
+    NextJS[Next.js UI] ---|View/Manage| LarkBase
 ```
 
 ### 主要コンポーネント
-- **`src/engine/runner.ts`**: 全体の中核ロジック。`Promise.allSettled` による並列処理を制御。
-- **`src/engine/crawler.ts`**: URL パターンに基づいて自動的に最適な取得方法を選択:
-    - 静的ページ: Axios + Cheerio（高速）
-    - JavaScript レンダリングページ: Puppeteer（platform.claude.com など）
-- **`src/lib/notification.ts`**: Lark 通知カードの構築と送信を担当。
-- **`src/lib/lark.ts`**: Lark SDK を使用したデータの読み書き。
+- **`scripts/run-all.ts`**: GitHub Actions から実行されるメインランナー。自動発見と監視チェックを一括実行。
+- **`src/engine/discovery.ts`**: 新しいリンクを自動で見つけるためのエンジン。
+- **`src/engine/date-extractor.ts`**: 日本語の日付表現を機械可読な形式に変換。
+- **`src/engine/crawler.ts`**: 静的・動的ページを賢く使い分けてコンテンツを取得。
 
 ## 技術スタック
 
@@ -73,16 +80,18 @@ graph TD
 - **監視の追加**: ダッシュボードのフォームから URL と セレクタを入力して登録します。
 - **Base と同期**: Lark Base 側で直接追加したレコードを UI に反映させるには、画面右上の「Base と同期」ボタンを押してください。
 
-### 2. 定期実行 (GitHub Actions) ★推奨
-Vercel の Hobby プランでは Cron ジョブが 1日1回に制限されているため、**GitHub Actions** を使用して 1時間（またはそれ以上）おきに実行することを推奨します。
+### 2. 定期実行 (GitHub Actions)
+Vercel の実行制限に関わらず安定した監視を行うため、**GitHub Actions** での実行を前提としています。
 
 #### GitHub Secrets の設定
 リポジトリの `Settings > Secrets and variables > Actions` に以下を登録してください。
 
-- `VERCEL_APP_URL`: デプロイした Vercel の URL (例: `https://your-app.vercel.app`)
-- `CRON_SECRET`: Vercel 側に設定した `CRON_SECRET` と同じ値
+- `LARK_APP_ID`: Lark アプリの ID
+- `LARK_APP_SECRET`: Lark アプリの Secret
+- `LARK_BASE_URL`: Lark Base の全体URL
+- `LARK_NOTIFY_CHAT_ID`: 通知先の ID
 
-設定後、`.github/workflows/cron.yml` に基づいて自動実行が開始されます。
+設定後、`.github/workflows/monitor.yml` に基づいて毎日自動実行されます。
 
 ### 3. API 直接実行
 `GET /api/cron?secret=YOUR_CRON_SECRET` を叩くことで、手動で一括チェックを起動できます。

@@ -44,6 +44,8 @@ const extracted = extractBaseAndTableIds(process.env.LARK_BASE_URL || '');
 
 export const LARK_BASE_ID = extracted.baseId;
 export const LARK_MONITORS_TABLE = extracted.tableId;
+export const LARK_DISCOVERY_TABLE = 'tblfuKUnCXhtMiY1'; // 手動で追加したDiscoveryRulesテーブルのID
+export const LARK_SALE_EVENTS_TABLE = 'tblWk1PPit7QRGeR'; // 自動作成されたセール蓄積用テーブルのID
 
 if (!LARK_BASE_ID || !LARK_MONITORS_TABLE) {
   console.error('Error: LARK_BASE_URL is not set or invalid. Please check your environment variables.');
@@ -73,9 +75,9 @@ export const larkBase = {
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async createMonitor(fields: any) {
+  async createMonitor(fields: any, tableId = LARK_MONITORS_TABLE) {
     const res = await client.bitable.appTableRecord.create({
-      path: { app_token: LARK_BASE_ID, table_id: LARK_MONITORS_TABLE },
+      path: { app_token: LARK_BASE_ID, table_id: tableId },
       data: { fields }
     });
     return res.data?.record;
@@ -87,11 +89,70 @@ export const larkBase = {
     });
   },
 
+  async deleteDiscoveryRule(recordId: string) {
+    await client.bitable.appTableRecord.delete({
+      path: { app_token: LARK_BASE_ID, table_id: LARK_DISCOVERY_TABLE, record_id: recordId }
+    });
+  },
+
   async getBaseInfo() {
     const res = await client.bitable.app.get({
       path: { app_token: LARK_BASE_ID }
     });
     return res.data?.app;
+  },
+
+  async getDiscoveryRules() {
+    const res = await client.bitable.appTableRecord.list({
+      path: { app_token: LARK_BASE_ID, table_id: LARK_DISCOVERY_TABLE }
+    });
+    return res.data?.items || [];
+  },
+
+  async getSaleEvents() {
+    const res = await client.bitable.appTableRecord.list({
+      path: { app_token: LARK_BASE_ID, table_id: LARK_SALE_EVENTS_TABLE }
+    });
+    return res.data?.items || [];
+  },
+
+  async upsertSaleEvent(fields: { EventTitle: string; URL: string; StartDate: string; EndDate: string; LastHash?: string; FoundAt: string }) {
+    // URLをキーに既存レコードを確認
+    const escapedUrl = fields.URL.replace(/"/g, '\\"');
+    const existing = await client.bitable.appTableRecord.list({
+      path: { app_token: LARK_BASE_ID, table_id: LARK_SALE_EVENTS_TABLE },
+      params: { filter: `CurrentValue.[URL]="${escapedUrl}"` }
+    });
+
+    if (existing.data?.items && existing.data.items.length > 0) {
+      const recordId = existing.data.items[0].record_id!;
+      await client.bitable.appTableRecord.update({
+        path: { app_token: LARK_BASE_ID, table_id: LARK_SALE_EVENTS_TABLE, record_id: recordId },
+        data: { fields }
+      });
+      return { recordId, action: 'updated' };
+    } else {
+      const res = await client.bitable.appTableRecord.create({
+        path: { app_token: LARK_BASE_ID, table_id: LARK_SALE_EVENTS_TABLE },
+        data: { fields }
+      });
+      return { recordId: res.data?.record?.record_id, action: 'created' };
+    }
+  },
+
+  async createMonitorIfNotExists(fields: { URL: string; Label: string; Selector: string }) {
+    // すでに同じURLが登録されていないか確認
+    const escapedUrl = fields.URL.replace(/"/g, '\\"');
+    const existing = await client.bitable.appTableRecord.list({
+      path: { app_token: LARK_BASE_ID, table_id: LARK_MONITORS_TABLE },
+      params: { filter: `CurrentValue.[URL]="${escapedUrl}"` }
+    });
+
+    if (existing.data?.items && existing.data.items.length > 0) {
+      return null; // すでに存在
+    }
+
+    return this.createMonitor(fields);
   }
 };
 

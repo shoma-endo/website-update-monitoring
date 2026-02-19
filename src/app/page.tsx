@@ -1,49 +1,63 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, ExternalLink } from 'lucide-react';
+import { RefreshCw, ExternalLink, Search, List } from 'lucide-react';
 import Image from 'next/image';
 import MonitorForm from '@/components/MonitorForm';
 import MonitorList, { Monitor } from '@/components/MonitorList';
+import DiscoveryForm from '@/components/DiscoveryForm';
+import DiscoveryList, { DiscoveryRule } from '@/components/DiscoveryList';
 
 export default function Home() {
+  const [tab, setTab] = useState<'monitors' | 'discovery'>('monitors');
   const [monitors, setMonitors] = useState<Monitor[]>([]);
+  const [discoveryRules, setDiscoveryRules] = useState<DiscoveryRule[]>([]);
   const [baseInfo, setBaseInfo] = useState<{ name: string; app_token?: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMonitors, setIsLoadingMonitors] = useState(true);
+  const [isLoadingDiscovery, setIsLoadingDiscovery] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const fetchMonitors = async (showAlert = false) => {
-    setIsLoading(true);
-    setIsSyncing(true);
+  const fetchMonitors = async () => {
+    setIsLoadingMonitors(true);
     try {
       const res = await fetch('/api/monitors');
       const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to fetch');
-      }
-
-      setMonitors(data.items || []);
-      if (data.baseInfo) {
-        setBaseInfo(data.baseInfo);
-      }
-      
-      if (showAlert) {
-        alert('Lark Base との同期に成功しました。');
+      if (res.ok) {
+        setMonitors(data.items || []);
+        if (data.baseInfo) setBaseInfo(data.baseInfo);
       }
     } catch (e) {
-      console.error('Failed to fetch:', e);
-      if (showAlert) {
-        alert('Lark Base との同期に失敗しました。');
-      }
+      console.error('Failed to fetch monitors:', e);
     } finally {
-      setIsLoading(false);
-      setIsSyncing(false);
+      setIsLoadingMonitors(false);
     }
+  };
+
+  const fetchDiscoveryRules = async () => {
+    setIsLoadingDiscovery(true);
+    try {
+      const res = await fetch('/api/discovery');
+      const data = await res.json();
+      if (res.ok) {
+        setDiscoveryRules(data.items || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch discovery rules:', e);
+    } finally {
+      setIsLoadingDiscovery(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    await Promise.all([fetchMonitors(), fetchDiscoveryRules()]);
+    setIsSyncing(false);
+    alert('Lark Base との同期に成功しました。');
   };
 
   useEffect(() => {
     fetchMonitors();
+    fetchDiscoveryRules();
   }, []);
 
   return (
@@ -82,45 +96,79 @@ export default function Home() {
           </p>
         </header>
 
-        <main className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* 左カラム: 登録フォーム */}
-          <div className="lg:col-span-12 xl:col-span-5">
-            <div className="bg-[var(--card-bg)] p-2 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[var(--border-color)]">
-              <MonitorForm onSuccess={fetchMonitors} />
+        <main>
+          {/* タブ切り替え */}
+          <div className="flex justify-center mb-12">
+            <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-[var(--border-color)]">
+              <button 
+                onClick={() => setTab('monitors')}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === 'monitors' ? 'bg-white dark:bg-slate-800 text-[var(--brand-blue)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+              >
+                <List size={18} />
+                監視リスト
+              </button>
+              <button 
+                onClick={() => setTab('discovery')}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === 'discovery' ? 'bg-white dark:bg-slate-800 text-[var(--brand-blue)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+              >
+                <Search size={18} />
+                URL自動追加設定
+              </button>
             </div>
           </div>
 
-          {/* 右カラム: 監視リスト */}
-          <div className="lg:col-span-12 xl:col-span-7">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 text-center sm:text-left">
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-2xl font-bold text-[var(--text-primary)]">モニタリング一覧</h2>
-                  {baseInfo?.app_token && (
-                    <a 
-                      href={`https://www.larksuite.com/base/${baseInfo.app_token}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--brand-blue-bg)] text-[var(--brand-blue)] text-xs font-semibold hover:bg-[var(--brand-blue-bg)]/80 transition-colors border border-[var(--brand-blue)]/20"
-                    >
-                      <ExternalLink size={12} />
-                      {baseInfo.name}
-                    </a>
-                  )}
-                </div>
-                <p className="text-sm text-[var(--text-secondary)] mt-1">現在稼働中の監視タスクを管理できます</p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            {/* 左カラム: 登録フォーム */}
+            <div className="lg:col-span-12 xl:col-span-5">
+              <div className="bg-[var(--card-bg)] p-2 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[var(--border-color)]">
+                {tab === 'monitors' ? (
+                  <MonitorForm onSuccess={fetchMonitors} />
+                ) : (
+                  <DiscoveryForm onSuccess={fetchDiscoveryRules} />
+                )}
               </div>
-              <button 
-                onClick={() => fetchMonitors(true)} 
-                disabled={isSyncing}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--card-bg)] hover:bg-[var(--card-hover-bg)] border border-[var(--border-color)] rounded-xl text-sm font-semibold text-[var(--text-primary)] shadow-sm transition-all disabled:opacity-50"
-              >
-                <RefreshCw size={18} className={isSyncing ? 'animate-spin text-[var(--brand-blue)]' : 'text-[var(--text-secondary)]'} />
-                Lark Base から同期
-              </button>
             </div>
-            <MonitorList monitors={monitors} isLoading={isLoading} onRefresh={() => fetchMonitors()} />
 
+            {/* 右カラム: リスト表示 */}
+            <div className="lg:col-span-12 xl:col-span-7">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 text-center sm:text-left">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+                      {tab === 'monitors' ? 'モニタリング一覧' : '自動追加設定一覧'}
+                    </h2>
+                    {baseInfo?.app_token && (
+                      <a 
+                        href={`https://www.larksuite.com/base/${baseInfo.app_token}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--brand-blue-bg)] text-[var(--brand-blue)] text-xs font-semibold hover:bg-[var(--brand-blue-bg)]/80 transition-colors border border-[var(--brand-blue)]/20"
+                      >
+                        <ExternalLink size={12} />
+                        {baseInfo.name}
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-sm text-[var(--text-secondary)] mt-1">
+                    {tab === 'monitors' ? '現在稼働中の監視タスクを管理できます' : '新しいURLを自動検知して追加する条件を設定できます'}
+                  </p>
+                </div>
+                <button 
+                  onClick={handleSync} 
+                  disabled={isSyncing}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--card-bg)] hover:bg-slate-50 border border-[var(--border-color)] rounded-xl text-sm font-semibold text-[var(--text-primary)] shadow-sm transition-all disabled:opacity-50"
+                >
+                  <RefreshCw size={18} className={isSyncing ? 'animate-spin text-[var(--brand-blue)]' : 'text-[var(--text-secondary)]'} />
+                  Lark Base から同期
+                </button>
+              </div>
+              
+              {tab === 'monitors' ? (
+                <MonitorList monitors={monitors} isLoading={isLoadingMonitors} onRefresh={fetchMonitors} />
+              ) : (
+                <DiscoveryList rules={discoveryRules} isLoading={isLoadingDiscovery} onRefresh={fetchDiscoveryRules} />
+              )}
+            </div>
           </div>
         </main>
       </div>
