@@ -44,7 +44,7 @@ const extracted = extractBaseAndTableIds(process.env.LARK_BASE_URL || '');
 
 export const LARK_BASE_ID = extracted.baseId;
 export const LARK_MONITORS_TABLE = extracted.tableId;
-export const LARK_DISCOVERY_TABLE = 'tblfuKUnCXhtMiY1'; // 手動で追加したDiscoveryRulesテーブルのID
+export const LARK_DISCOVERY_TABLE = 'tblwliepcjDDGe9Q'; // 自動作成されたDiscoveryRulesテーブルのID
 export const LARK_SALE_EVENTS_TABLE = 'tblWk1PPit7QRGeR'; // 自動作成されたセール蓄積用テーブルのID
 
 if (!LARK_BASE_ID || !LARK_MONITORS_TABLE) {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { larkBase } from '@/lib/lark';
+import { larkBase, LARK_DISCOVERY_TABLE } from '@/lib/lark';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       URLPattern: urlPattern,
       TargetSelector: targetSelector,
       IsActive: !!isActive,
-    }, /* tableId: */ 'tblfuKUnCXhtMiY1'); // Need to update larkBase.createMonitor or add a specific one
+    }, LARK_DISCOVERY_TABLE);
 
     return NextResponse.json({ success: true, record });
   } catch (error: unknown) {
