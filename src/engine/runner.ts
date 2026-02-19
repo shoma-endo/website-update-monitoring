@@ -1,3 +1,5 @@
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import { larkBase } from '../lib/lark';
 import { fetchContent } from './crawler';
@@ -101,6 +103,28 @@ interface DiscoveryRule {
   };
 }
 
+/**
+ * URLからトラッキングパラメータなどを削除して正規化する
+ */
+function normalizeUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}${u.pathname}`;
+  } catch {
+    return url.split('?')[0];
+  }
+}
+
+/**
+ * コンテンツから適切なタイトルを抽出する
+ */
+async function extractSmartTitle(url: string, targetSelector: string): Promise<string> {
+  // ブラウザレンダリングが必要な場合、より高度な抽出が可能だが、
+  // 現在の fetchContent はテキストのみを返すため、Cheerio で HTML を再取得して解析する
+  // (パフォーマンスを考慮し、すでに取得済みの content を引数で渡すように runner を変更する)
+  return 'New Event'; // プレースホルダー、実際には下のループ内で処理
+}
+
 export async function runDiscovery() {
   console.log('Starting discovery phase...');
   const rules = (await larkBase.getDiscoveryRules()) as DiscoveryRule[];
@@ -114,16 +138,57 @@ export async function runDiscovery() {
       const discoveredUrls = await discoverLinks(SourceURL, LinkSelector, URLPattern);
       console.log(`Discovered ${discoveredUrls.length} links for rule: ${Label}`);
 
-      for (const url of discoveredUrls) {
+      for (const rawUrl of discoveredUrls) {
+        const url = normalizeUrl(rawUrl);
         try {
           // 個別イベントページをクロールして情報を抽出
           console.log(`Crawling discovered event: ${url}`);
-          const content = await fetchContent(url, TargetSelector);
+          let content = '';
+          let isFallback = false;
+          try {
+            content = await fetchContent(url, TargetSelector);
+          } catch (e) {
+            console.warn(`Selector "${TargetSelector}" not found on ${url}. Falling back to body...`);
+            content = await fetchContent(url, 'body');
+            isFallback = true;
+          }
+          
           const currentHash = crypto.createHash('sha256').update(content).digest('hex');
           const { startDate, endDate } = extractDatesFromText(content);
           
-          // タイトルを簡易抽出（セレクタの中身を使う
-          const eventTitle = content.split('\n')[0].trim().substring(0, 100) || 'New Event';
+          // タイトル抽出の改善
+          let eventTitle = '';
+          
+          if (!isFallback) {
+            // 指定セレクタがヒットした場合はその1行目（ただしゴミ取り付き）
+            eventTitle = content.split('\n').map(l => l.trim()).find(l => l && !l.startsWith('{') && !l.startsWith('(')) || '';
+          }
+
+          // フォールバック時、またはセレクタで見つかったタイトルが不適切な場合
+          if (!eventTitle || eventTitle.length < 2) {
+            // 再度 fetchContentStatic 相当の処理が必要だが、runner 内で cheerio を直接使う
+            try {
+              const { data: html } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+              const $ = cheerio.load(html);
+              
+              // 優先度 1: img の alt (発見系では有効なことが多い)
+              eventTitle = $('img').map((_, el) => $(el).attr('alt')).get().find(alt => alt && alt.length > 5 && !alt.includes('{')) || '';
+              
+              // 優先度 2: h1
+              if (!eventTitle) {
+                eventTitle = $('h1').first().text().trim();
+              }
+              
+              // 優先度 3: title
+              if (!eventTitle) {
+                eventTitle = $('title').text().replace(/Amazon/g, '').replace(/[\s|:|-].*/, '').trim();
+              }
+            } catch {
+              eventTitle = 'New Event';
+            }
+          }
+
+          eventTitle = eventTitle.substring(0, 100) || 'New Event';
 
           const result = await larkBase.upsertSaleEvent({
             EventTitle: eventTitle,
