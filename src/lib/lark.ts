@@ -116,7 +116,7 @@ export const larkBase = {
     return res.data?.items || [];
   },
 
-  async upsertSaleEvent(fields: { EventTitle: string; URL: string; StartDate: string; EndDate: string; LastHash?: string; FoundAt: string }) {
+  async upsertSaleEvent(fields: { EventTitle: string; URL: string; StartDate: number | null; EndDate: number | null; LastHash?: string; FoundAt: number }) {
     // URLをキーに既存レコードを確認
     const escapedUrl = fields.URL.replace(/"/g, '\\"');
     const existing = await client.bitable.appTableRecord.list({
@@ -128,13 +128,13 @@ export const larkBase = {
       const recordId = existing.data.items[0].record_id!;
       await client.bitable.appTableRecord.update({
         path: { app_token: LARK_BASE_ID, table_id: LARK_SALE_EVENTS_TABLE, record_id: recordId },
-        data: { fields }
+        data: { fields: fields as any }
       });
       return { recordId, action: 'updated' };
     } else {
       const res = await client.bitable.appTableRecord.create({
         path: { app_token: LARK_BASE_ID, table_id: LARK_SALE_EVENTS_TABLE },
-        data: { fields }
+        data: { fields: fields as any }
       });
       return { recordId: res.data?.record?.record_id, action: 'created' };
     }

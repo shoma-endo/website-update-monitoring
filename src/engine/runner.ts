@@ -52,8 +52,8 @@ async function checkMonitor(record: MonitorRecord) {
         LastChecked: timestamp,
         Status: 'OK',
         ErrorMessage: '',
-        StartDate: startDate || '',
-        EndDate: endDate || ''
+        StartDate: startDate ? new Date(startDate).getTime() : null,
+        EndDate: endDate ? new Date(endDate).getTime() : null
       });
     } else {
       // 変更なしの場合は不要な通知を避けるため更新しない。
@@ -128,10 +128,10 @@ export async function runDiscovery() {
           const result = await larkBase.upsertSaleEvent({
             EventTitle: eventTitle,
             URL: url,
-            StartDate: startDate || '',
-            EndDate: endDate || '',
+            StartDate: startDate ? new Date(startDate).getTime() : null,
+            EndDate: endDate ? new Date(endDate).getTime() : null,
             LastHash: currentHash,
-            FoundAt: new Date().toISOString()
+            FoundAt: Date.now()
           });
 
           if (result.action === 'created') {
